@@ -27,7 +27,7 @@
 		<dependency>
 			<groupId>io.github.resilience4j</groupId>
 			<artifactId>resilience4j-circuitbreaker</artifactId>
-			<version>0.12.1</version>
+			<version>0.17.0</version>
 		</dependency>
 		<dependency>
 			<groupId>org.apache.httpcomponents</groupId>

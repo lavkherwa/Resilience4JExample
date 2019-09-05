@@ -1,7 +1,5 @@
 package com.example.resilience.controller;
 
-import java.util.concurrent.ExecutionException;
-
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
@@ -18,14 +16,9 @@ public class TestController {
 		this.testService = testService;
 	}
 
-	@GetMapping("testUsingSupplier")
+	@GetMapping("test")
 	public String testUsingSupplier() {
 		return testService.testUsingSupplier();
-	}
-
-	@GetMapping("testUsingCallable")
-	public String testUsingCallable() throws InterruptedException, ExecutionException {
-		return testService.testUsingCallable();
 	}
 
 }

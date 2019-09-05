@@ -11,9 +11,9 @@ public class Config {
 	@Bean
 	public RestTemplate restTemplate() {
 		HttpComponentsClientHttpRequestFactory clientHttpRequestFactory = new HttpComponentsClientHttpRequestFactory();
-//		clientHttpRequestFactory.setConnectTimeout(3000);
-//		clientHttpRequestFactory.setReadTimeout(3000);
-//		clientHttpRequestFactory.setConnectionRequestTimeout(3000);
+		clientHttpRequestFactory.setConnectTimeout(3000);
+		clientHttpRequestFactory.setReadTimeout(3000);
+		clientHttpRequestFactory.setConnectionRequestTimeout(3000);
 		
 		return new RestTemplate(clientHttpRequestFactory);
 	}

@@ -1,10 +1,6 @@
 package com.example.resilience.service;
 
 import java.time.Duration;
-import java.util.concurrent.Callable;
-import java.util.concurrent.ExecutionException;
-import java.util.concurrent.Executors;
-import java.util.concurrent.Future;
 import java.util.function.Supplier;
 
 import org.springframework.stereotype.Service;
@@ -14,6 +10,9 @@ import io.github.resilience4j.circuitbreaker.CircuitBreaker;
 import io.github.resilience4j.circuitbreaker.CircuitBreakerConfig;
 import io.vavr.control.Try;
 
+/*
+ * More details at: https://github.com/resilience4j/resilience4j#circuitbreaker
+ */
 @Service
 public class TestService {
 
@@ -26,48 +25,29 @@ public class TestService {
 	private CircuitBreakerConfig circuitBreakerConfig() {
 		return CircuitBreakerConfig//
 				.custom()//
-				.failureRateThreshold(20)// in percentage
-				.waitDurationInOpenState(Duration.ofMillis(10000))// how much time to keep the circuit open
-				.ringBufferSizeInHalfOpenState(
-						5)/*- allow 5 calls to go through in half open state to check if service is up again*/
-				.ringBufferSizeInClosedState(10)// track last 10 calls
+				.failureRateThreshold(10)// Percentage of calls fail to open a circuit
+				.waitDurationInOpenState(Duration.ofSeconds(30))// How much time to keep the circuit open
+				.ringBufferSizeInClosedState(10)// Track last 10 calls
 				.build();
 	}
 
 	public String testUsingSupplier() {
 
-		/* create a service broker instance for testService */
-		CircuitBreaker circuitBreaker = CircuitBreaker.of("targetService", circuitBreakerConfig());
+		/* Create a service broker instance for testService */
+		CircuitBreaker circuitBreaker = CircuitBreaker.of("targetService", this::circuitBreakerConfig);
 
 		/* Decorate the target service call around circuit breaker */
 		Supplier<String> supplier = CircuitBreaker.decorateSupplier(circuitBreaker, this::callService);
 
-		Try<String> result = Try.ofSupplier(supplier);
-		if (result.isSuccess()) {
-			return result.get();
-		} else {
-			return "not reached the target service";
-		}
-	}
-
-	public String testUsingCallable() throws InterruptedException, ExecutionException {
-
-		/* create a service broker instance for testService */
-		CircuitBreaker circuitBreaker = CircuitBreaker.of("targetService", circuitBreakerConfig());
-
-		/* Decorate the target service call around circuit breaker */
-		Callable<String> callable = CircuitBreaker.decorateCallable(circuitBreaker, this::callService);
-
-		Future<String> result = Executors.newSingleThreadExecutor().submit(callable);
-		try {
-			return result.get();
-		} catch (Exception e) { // Fail fast to protect resources from exhausting
-			return "not reached the target service";
-		}
+		return Try.ofSupplier(supplier).recover(throwable -> "Hello from Recovery").get();
 	}
 
 	public String callService() {
-		return restTemplate.getForObject("http://localhost:8080/api/message", String.class);
+
+		System.out.println("Actual service called");
+
+		String message = restTemplate.getForObject("http://localhost:8080/api/message", String.class);
+		return message;
 	}
 
 }
