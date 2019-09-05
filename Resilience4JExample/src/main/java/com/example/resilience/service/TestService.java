@@ -4,50 +4,49 @@ import java.time.Duration;
 import java.util.function.Supplier;
 
 import org.springframework.stereotype.Service;
-import org.springframework.web.client.RestTemplate;
 
 import io.github.resilience4j.circuitbreaker.CircuitBreaker;
 import io.github.resilience4j.circuitbreaker.CircuitBreakerConfig;
+import io.github.resilience4j.circuitbreaker.CircuitBreakerRegistry;
 import io.vavr.control.Try;
 
 /*
  * More details at: https://github.com/resilience4j/resilience4j#circuitbreaker
+ *                  https://resilience4j.readme.io/docs/examples
  */
 @Service
 public class TestService {
 
-	final private RestTemplate restTemplate;
+	final private TargetService targetService;
 
-	public TestService(RestTemplate restTemplate) {
-		this.restTemplate = restTemplate;
+	public TestService(TargetService targetService) {
+		this.targetService = targetService;
 	}
 
-	private CircuitBreakerConfig circuitBreakerConfig() {
-		return CircuitBreakerConfig//
+	private CircuitBreakerRegistry circuitBreakerRegistery() {
+		CircuitBreakerConfig cbc = CircuitBreakerConfig//
 				.custom()//
-				.failureRateThreshold(10)// Percentage of calls fail to open a circuit
-				.waitDurationInOpenState(Duration.ofSeconds(30))// How much time to keep the circuit open
-				.ringBufferSizeInClosedState(10)// Track last 10 calls
+				.failureRateThreshold(50)//
+				.waitDurationInOpenState(Duration.ofMillis(1000))//
+				.ringBufferSizeInHalfOpenState(2)//
+				.ringBufferSizeInClosedState(2)//
 				.build();
+
+		return CircuitBreakerRegistry.of(cbc);
+
 	}
 
 	public String testUsingSupplier() {
 
 		/* Create a service broker instance for testService */
-		CircuitBreaker circuitBreaker = CircuitBreaker.of("targetService", this::circuitBreakerConfig);
+		CircuitBreaker circuitBreaker = circuitBreakerRegistery().circuitBreaker("targetService");
 
 		/* Decorate the target service call around circuit breaker */
-		Supplier<String> supplier = CircuitBreaker.decorateSupplier(circuitBreaker, this::callService);
+		Supplier<String> supplier = CircuitBreaker.decorateSupplier(circuitBreaker, targetService::callService);
 
-		return Try.ofSupplier(supplier).recover(throwable -> "Hello from Recovery").get();
-	}
-
-	public String callService() {
-
-		System.out.println("Actual service called");
-
-		String message = restTemplate.getForObject("http://localhost:8080/api/message", String.class);
-		return message;
+		return Try.ofSupplier(supplier)//
+				.recover(throwable -> "Hello from Recovery")//
+				.get();
 	}
 
 }
