@@ -7,15 +7,14 @@ import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
 import java.util.function.Supplier;
 
-import org.springframework.stereotype.Component;
+import org.springframework.stereotype.Service;
 import org.springframework.web.client.RestTemplate;
 
 import io.github.resilience4j.circuitbreaker.CircuitBreaker;
 import io.github.resilience4j.circuitbreaker.CircuitBreakerConfig;
-import io.github.resilience4j.circuitbreaker.CircuitBreakerOpenException;
 import io.vavr.control.Try;
 
-@Component
+@Service
 public class TestService {
 
 	final private RestTemplate restTemplate;
@@ -28,7 +27,7 @@ public class TestService {
 		return CircuitBreakerConfig//
 				.custom()//
 				.failureRateThreshold(20)// in percentage
-				.waitDurationInOpenState(Duration.ofMillis(1000))// how much time to keep the circuit open
+				.waitDurationInOpenState(Duration.ofMillis(10000))// how much time to keep the circuit open
 				.ringBufferSizeInHalfOpenState(
 						5)/*- allow 5 calls to go through in half open state to check if service is up again*/
 				.ringBufferSizeInClosedState(10)// track last 10 calls
@@ -62,7 +61,7 @@ public class TestService {
 		Future<String> result = Executors.newSingleThreadExecutor().submit(callable);
 		try {
 			return result.get();
-		} catch (CircuitBreakerOpenException e) { // Fail fast to protect resources from exhausting
+		} catch (Exception e) { // Fail fast to protect resources from exhausting
 			return "not reached the target service";
 		}
 	}
