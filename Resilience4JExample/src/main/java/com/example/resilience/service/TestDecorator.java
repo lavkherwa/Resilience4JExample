@@ -15,11 +15,11 @@ import io.vavr.control.Try;
  *                  https://resilience4j.readme.io/docs/examples
  */
 @Service
-public class TestService {
+public class TestDecorator {
 
 	final private TargetService targetService;
 
-	public TestService(TargetService targetService) {
+	public TestDecorator(TargetService targetService) {
 		this.targetService = targetService;
 	}
 
@@ -45,7 +45,7 @@ public class TestService {
 		Supplier<String> supplier = CircuitBreaker.decorateSupplier(circuitBreaker, targetService::callService);
 
 		return Try.ofSupplier(supplier)//
-				.recover(throwable -> "Hello from Recovery")//
+				.recover(throwable -> "Hello from Recovery!!")//
 				.get();
 	}
 

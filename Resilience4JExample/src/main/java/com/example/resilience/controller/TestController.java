@@ -4,21 +4,21 @@ import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
-import com.example.resilience.service.TestService;
+import com.example.resilience.service.TestDecorator;
 
 @RestController
 @RequestMapping("/")
 public class TestController {
 
-	final TestService testService;
+	final TestDecorator testDecorator;
 
-	public TestController(TestService testService) {
-		this.testService = testService;
+	public TestController(TestDecorator testService) {
+		this.testDecorator = testService;
 	}
 
 	@GetMapping("test")
 	public String testUsingSupplier() {
-		return testService.testUsingSupplier();
+		return testDecorator.testUsingSupplier();
 	}
 
 }
